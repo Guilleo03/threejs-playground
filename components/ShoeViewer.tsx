@@ -24,10 +24,8 @@ function ShoeModel() {
   useEffect(() => {
     if (!meshRef.current) return;
 
-    console.log('[v0] Setting up scroll trigger for brain rotation');
-
     // Create scroll-triggered rotation animation
-    const tl = gsap.timeline({
+    const scrollTl = gsap.timeline({
       scrollTrigger: {
         trigger: document.body,
         start: 'top top',
@@ -35,8 +33,9 @@ function ShoeModel() {
         scrub: 1, // Smooth scrubbing
         onUpdate: self => {
           if (meshRef.current) {
-            // Rotate on Y-axis based on scroll progress
-            meshRef.current.rotation.y = self.progress * Math.PI * 4;
+            // Rotate on Y-axis based on scroll progress, starting from 45 degrees
+            meshRef.current.rotation.y =
+              Math.PI / 1.5 + self.progress * Math.PI * 4;
             // Add subtle X-axis rotation for more dynamic movement
             meshRef.current.rotation.x =
               Math.sin(self.progress * Math.PI * 2) * 0.2;
@@ -47,7 +46,7 @@ function ShoeModel() {
     });
 
     return () => {
-      tl.kill();
+      scrollTl.kill();
     };
   }, []);
 
@@ -61,7 +60,7 @@ function ShoeModel() {
   });
 
   return (
-    <group ref={meshRef} scale={[1.2, 1.2, 1.2]} position={[0, 0, 0]}>
+    <group ref={meshRef} position={[0, 0, 0]} rotation={[0, Math.PI / 1.5, 0]}>
       <primitive object={scene} />
     </group>
   );
@@ -78,10 +77,28 @@ function Loader() {
 }
 
 export default function ShoeViewer() {
-  console.log('[v0] BrainViewer component rendering');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  console.log('[v0] ShoeViewer component rendering');
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    // Fade in the entire canvas
+    gsap.fromTo(
+      containerRef.current,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: 1.5,
+        ease: 'power2.out',
+        delay: 0.2,
+      }
+    );
+  }, []);
 
   return (
-    <div className="fixed inset-0 z-0 pointer-events-none">
+    <div ref={containerRef} className="fixed inset-0 z-0 pointer-events-none">
       <Canvas className="w-full h-full">
         <PerspectiveCamera makeDefault position={[0, 0, 2]} />
 
