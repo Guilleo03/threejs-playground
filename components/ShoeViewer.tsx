@@ -17,6 +17,18 @@ if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+// Define 4 scroll stages with different alignments (outside component to avoid dependency issues)
+const scrollStages = [
+  // Stage 1: Vertical and horizontal aligned (center)
+  { position: [0, 0, 0], rotation: [0, Math.PI / 1.5, 0] },
+  // Stage 2: Aligned to the left
+  { position: [1.5, 0, 0], rotation: [Math.PI / 4, 0, Math.PI / 4] },
+  // Stage 3: Aligned to the right
+  { position: [-1.5, 0, 0], rotation: [0, Math.PI / 1.5, 0] },
+  // Stage 4: Vertical and horizontal aligned (center)
+  { position: [0, 0, 0], rotation: [0, Math.PI / 1.5, 0] },
+];
+
 function ShoeModel({
   mousePosition,
 }: {
@@ -50,7 +62,7 @@ function ShoeModel({
       '<'
     );
 
-    // Create scroll-triggered rotation animation
+    // Create scroll-triggered stage-based animation
     const scrollTl = gsap.timeline({
       scrollTrigger: {
         trigger: document.body,
@@ -59,13 +71,57 @@ function ShoeModel({
         scrub: 1, // Smooth scrubbing
         onUpdate: self => {
           if (meshRef.current) {
-            // Rotate on Y-axis based on scroll progress, starting from 45 degrees
-            meshRef.current.rotation.y =
-              Math.PI / 1.5 + self.progress * Math.PI * 4;
-            // Add subtle X-axis rotation for more dynamic movement
-            meshRef.current.rotation.x =
-              Math.sin(self.progress * Math.PI * 2) * 0.2;
-            console.log('[v0] Scroll progress:', self.progress);
+            const progress = self.progress;
+            const stageProgress = progress * (scrollStages.length - 1);
+            const currentStage = Math.floor(stageProgress);
+            const nextStage = Math.min(
+              currentStage + 1,
+              scrollStages.length - 1
+            );
+            const stageBlend = stageProgress - currentStage;
+
+            // Interpolate between current and next stage
+            const currentStageData = scrollStages[currentStage];
+            const nextStageData = scrollStages[nextStage];
+
+            // Smooth position interpolation
+            const baseX =
+              currentStageData.position[0] +
+              (nextStageData.position[0] - currentStageData.position[0]) *
+                stageBlend;
+            const baseY =
+              currentStageData.position[1] +
+              (nextStageData.position[1] - currentStageData.position[1]) *
+                stageBlend;
+            const baseZ =
+              currentStageData.position[2] +
+              (nextStageData.position[2] - currentStageData.position[2]) *
+                stageBlend;
+
+            // Store base position for magnetic effect
+            meshRef.current.userData.basePosition = {
+              x: baseX,
+              y: baseY,
+              z: baseZ,
+            };
+
+            // Set position (magnetic effect will be applied in useFrame)
+            meshRef.current.position.x = baseX;
+            meshRef.current.position.y = baseY;
+            meshRef.current.position.z = baseZ;
+
+            // Keep the original rotation behavior for dynamic movement
+            meshRef.current.rotation.y = Math.PI / 1.5 + progress * Math.PI * 4;
+            meshRef.current.rotation.x = Math.sin(progress * Math.PI * 2) * 0.2;
+
+            console.log(
+              '[v0] Scroll progress:',
+              progress,
+              'Stage:',
+              currentStage,
+              'Blend:',
+              stageBlend
+            );
           }
         },
       },
@@ -80,19 +136,28 @@ function ShoeModel({
   // Auto-rotate when not scrolling and magnetic effect
   useFrame(state => {
     if (meshRef.current) {
-      // Add subtle floating animation
-      meshRef.current.position.y =
-        Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
+      // Initialize base position if not set
+      if (!meshRef.current.userData.basePosition) {
+        meshRef.current.userData.basePosition = { x: 0, y: 0, z: 0 };
+      }
+
+      // Get the base position from scroll (set by scroll trigger)
+      const currentBaseX = meshRef.current.userData.basePosition.x;
+      const currentBaseY = meshRef.current.userData.basePosition.y;
+      const currentBaseZ = meshRef.current.userData.basePosition.z;
+
+      // Add subtle floating animation to Y position
+      const floatingY =
+        currentBaseY + Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
 
       // Magnetic effect - move away from cursor position (opposite direction)
-      const targetX = -(mousePosition.x - 0.5) * 0.5; // Invert X direction
-      const targetZ = -(mousePosition.y - 0.5) * 0.5; // Invert Z direction
+      const magneticOffsetX = -(mousePosition.x - 0.5) * 0.3; // Reduced intensity for better balance
+      const magneticOffsetZ = -(mousePosition.y - 0.5) * 0.3;
 
-      // Smooth interpolation for natural movement
-      meshRef.current.position.x +=
-        (targetX - meshRef.current.position.x) * 0.05;
-      meshRef.current.position.z +=
-        (targetZ - meshRef.current.position.z) * 0.05;
+      // Apply all effects: base position + floating + magnetic
+      meshRef.current.position.x = currentBaseX + magneticOffsetX;
+      meshRef.current.position.y = floatingY;
+      meshRef.current.position.z = currentBaseZ + magneticOffsetZ;
     }
   });
 

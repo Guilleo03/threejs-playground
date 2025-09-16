@@ -9,18 +9,36 @@ export default function Home() {
 
       <section className="relative z-20 h-screen bg-muted/20 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-3xl font-bold mb-4">Interactive Experience</h2>
+          <h2 className="text-3xl font-bold mb-4">Stage 1: Centered</h2>
           <p className="text-muted-foreground">
-            The brain rotates as you scroll through the page
+            The shoe starts centered and aligned
           </p>
         </div>
       </section>
 
       <section className="relative z-20 h-screen bg-muted/20 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-3xl font-bold mb-4">Keep Scrolling</h2>
+          <h2 className="text-3xl font-bold mb-4">Stage 2: Left Aligned</h2>
           <p className="text-muted-foreground">
-            Watch the brain continue to rotate
+            Watch the shoe move to the left
+          </p>
+        </div>
+      </section>
+
+      <section className="relative z-20 h-screen bg-muted/20 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold mb-4">Stage 3: Right Aligned</h2>
+          <p className="text-muted-foreground">
+            Now it moves to the right side
+          </p>
+        </div>
+      </section>
+
+      <section className="relative z-20 h-screen bg-muted/20 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold mb-4">Stage 4: Back to Center</h2>
+          <p className="text-muted-foreground">
+            Finally returns to the center position
           </p>
         </div>
       </section>
