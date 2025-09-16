@@ -20,14 +20,18 @@ if (typeof window !== 'undefined') {
 // Define 4 scroll stages with different alignments (outside component to avoid dependency issues)
 const scrollStages = [
   // Stage 1: Vertical and horizontal aligned (center)
-  { position: [0, 0, 0], rotation: [0, Math.PI / 1.5, 0] },
+  { position: [0, 0, 0], rotation: [0, Math.PI / 1.5, 0], scale: [1, 1, 1] },
   // Stage 2: Aligned to the left
-  { position: [1.5, 0, 0], rotation: [0, -Math.PI / 2, 0] },
+  { position: [1.5, 0, 0], rotation: [0, -Math.PI / 2, 0], scale: [1, 1, 1] },
   // Stage 3: Aligned to the right
-  { position: [-1, 0, 0], rotation: [Math.PI / 1.8, 0, -Math.PI / 1] },
+  {
+    position: [-1, 0, 0],
+    rotation: [Math.PI / 1.8, 0, -Math.PI / 0.9],
+    scale: [0.8, 0.8, 0.8],
+  },
 
   // Stage 4: Vertical and horizontal aligned (center)
-  { position: [0, 0, 0], rotation: [0, Math.PI / 1.5, 0] },
+  { position: [0, 0, 0], rotation: [0, Math.PI / 1.5, 0], scale: [1, 1, 1] },
 ];
 
 function ShoeModel({
@@ -113,7 +117,18 @@ function ShoeModel({
               (nextStageData.rotation[2] - currentStageData.rotation[2]) *
                 stageBlend;
 
-            // Store base position and rotation for magnetic effect
+            // Interpolate scale between stages
+            const baseScaleX =
+              currentStageData.scale[0] +
+              (nextStageData.scale[0] - currentStageData.scale[0]) * stageBlend;
+            const baseScaleY =
+              currentStageData.scale[1] +
+              (nextStageData.scale[1] - currentStageData.scale[1]) * stageBlend;
+            const baseScaleZ =
+              currentStageData.scale[2] +
+              (nextStageData.scale[2] - currentStageData.scale[2]) * stageBlend;
+
+            // Store base position, rotation, and scale for magnetic effect
             meshRef.current.userData.basePosition = {
               x: baseX,
               y: baseY,
@@ -123,6 +138,11 @@ function ShoeModel({
               x: baseRotationX,
               y: baseRotationY,
               z: baseRotationZ,
+            };
+            meshRef.current.userData.baseScale = {
+              x: baseScaleX,
+              y: baseScaleY,
+              z: baseScaleZ,
             };
 
             // Set position (magnetic effect will be applied in useFrame)
@@ -134,6 +154,11 @@ function ShoeModel({
             meshRef.current.rotation.x = baseRotationX;
             meshRef.current.rotation.y = baseRotationY;
             meshRef.current.rotation.z = baseRotationZ;
+
+            // Set scale from stages
+            meshRef.current.scale.x = baseScaleX;
+            meshRef.current.scale.y = baseScaleY;
+            meshRef.current.scale.z = baseScaleZ;
 
             console.log(
               '[v0] Scroll progress:',
