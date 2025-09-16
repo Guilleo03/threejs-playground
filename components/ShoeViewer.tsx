@@ -24,6 +24,28 @@ function ShoeModel() {
   useEffect(() => {
     if (!meshRef.current) return;
 
+    const entranceTl = gsap.timeline();
+
+    entranceTl.fromTo(
+      meshRef.current.scale,
+      { x: 0, y: 0, z: 0 },
+      { x: 1, y: 1, z: 1, duration: 1.5, ease: 'power2.inOut' },
+      '<'
+    );
+
+    entranceTl.fromTo(
+      meshRef.current.rotation,
+      { x: 2, y: 4, z: 2 },
+      {
+        x: 0,
+        y: Math.PI / 1.5,
+        z: 0,
+        duration: 1.5,
+        ease: 'power2.inOut',
+      },
+      '<'
+    );
+
     // Create scroll-triggered rotation animation
     const scrollTl = gsap.timeline({
       scrollTrigger: {
@@ -47,6 +69,7 @@ function ShoeModel() {
 
     return () => {
       scrollTl.kill();
+      entranceTl.kill();
     };
   }, []);
 
