@@ -11,28 +11,13 @@ import {
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type * as THREE from 'three';
+import { useScreenSize } from '@/hooks/useScreenSize';
+import { mobileStages, desktopStages } from '@/utils/stages';
 
 // Register GSAP plugin
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
-
-// Define 4 scroll stages with different alignments (outside component to avoid dependency issues)
-const scrollStages = [
-  // Stage 1: Vertical and horizontal aligned (center)
-  { position: [0, 0, 0], rotation: [0, Math.PI / 1.5, 0], scale: [1, 1, 1] },
-  // Stage 2: Aligned to the left
-  { position: [1.5, 0, 0], rotation: [0, -Math.PI / 2, 0], scale: [1, 1, 1] },
-  // Stage 3: Aligned to the right
-  {
-    position: [-1, 0, 0],
-    rotation: [Math.PI / 1.8, 0, -Math.PI / 0.9],
-    scale: [0.8, 0.8, 0.8],
-  },
-
-  // Stage 4: Vertical and horizontal aligned (center)
-  { position: [0, 0, 0], rotation: [0, Math.PI / 1.5, 0], scale: [1, 1, 1] },
-];
 
 function ShoeModel({
   mousePosition,
@@ -42,6 +27,13 @@ function ShoeModel({
   const meshRef = useRef<THREE.Group>(null);
   const { scene } = useGLTF('/shoe.glb');
 
+  const { breakpoint } = useScreenSize();
+  const isMobile = breakpoint === 'sm';
+
+  const scrollStages = isMobile ? mobileStages : desktopStages;
+
+  const modelScale = isMobile ? 0.4 : 1;
+
   useEffect(() => {
     if (!meshRef.current) return;
 
@@ -50,7 +42,13 @@ function ShoeModel({
     entranceTl.fromTo(
       meshRef.current.scale,
       { x: 0, y: 0, z: 0 },
-      { x: 1, y: 1, z: 1, duration: 1.5, ease: 'power2.inOut' },
+      {
+        x: modelScale,
+        y: modelScale,
+        z: modelScale,
+        duration: 1.5,
+        ease: 'power2.inOut',
+      },
       '<'
     );
 
@@ -159,15 +157,6 @@ function ShoeModel({
             meshRef.current.scale.x = baseScaleX;
             meshRef.current.scale.y = baseScaleY;
             meshRef.current.scale.z = baseScaleZ;
-
-            console.log(
-              '[v0] Scroll progress:',
-              progress,
-              'Stage:',
-              currentStage,
-              'Blend:',
-              stageBlend
-            );
           }
         },
       },
@@ -177,7 +166,7 @@ function ShoeModel({
       scrollTl.kill();
       entranceTl.kill();
     };
-  }, []);
+  }, [modelScale, scrollStages]);
 
   // Auto-rotate when not scrolling and magnetic effect
   useFrame(state => {
@@ -227,8 +216,6 @@ function Loader() {
 export default function ShoeViewer() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
-
-  console.log('[v0] ShoeViewer component rendering');
 
   useEffect(() => {
     if (!containerRef.current) return;
