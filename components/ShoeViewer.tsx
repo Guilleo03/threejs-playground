@@ -84,9 +84,9 @@ function ShoeModel({
       meshRef.current.position.y =
         Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
 
-      // Magnetic effect - move towards cursor position
-      const targetX = (mousePosition.x - 0.5) * 0.5; // Convert to -0.25 to 0.25 range
-      const targetZ = (mousePosition.y - 0.5) * 0.5; // Convert to -0.25 to 0.25 range
+      // Magnetic effect - move away from cursor position (opposite direction)
+      const targetX = -(mousePosition.x - 0.5) * 0.5; // Invert X direction
+      const targetZ = -(mousePosition.y - 0.5) * 0.5; // Invert Z direction
 
       // Smooth interpolation for natural movement
       meshRef.current.position.x +=
