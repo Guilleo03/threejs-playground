@@ -22,9 +22,10 @@ const scrollStages = [
   // Stage 1: Vertical and horizontal aligned (center)
   { position: [0, 0, 0], rotation: [0, Math.PI / 1.5, 0] },
   // Stage 2: Aligned to the left
-  { position: [1.5, 0, 0], rotation: [Math.PI / 4, 0, Math.PI / 4] },
+  { position: [1.5, 0, 0], rotation: [0, -Math.PI / 2, 0] },
   // Stage 3: Aligned to the right
-  { position: [-1.5, 0, 0], rotation: [0, Math.PI / 1.5, 0] },
+  { position: [-1, 0, 0], rotation: [Math.PI / 1.8, 0, -Math.PI / 1] },
+
   // Stage 4: Vertical and horizontal aligned (center)
   { position: [0, 0, 0], rotation: [0, Math.PI / 1.5, 0] },
 ];
@@ -98,11 +99,30 @@ function ShoeModel({
               (nextStageData.position[2] - currentStageData.position[2]) *
                 stageBlend;
 
-            // Store base position for magnetic effect
+            // Interpolate rotation between stages
+            const baseRotationX =
+              currentStageData.rotation[0] +
+              (nextStageData.rotation[0] - currentStageData.rotation[0]) *
+                stageBlend;
+            const baseRotationY =
+              currentStageData.rotation[1] +
+              (nextStageData.rotation[1] - currentStageData.rotation[1]) *
+                stageBlend;
+            const baseRotationZ =
+              currentStageData.rotation[2] +
+              (nextStageData.rotation[2] - currentStageData.rotation[2]) *
+                stageBlend;
+
+            // Store base position and rotation for magnetic effect
             meshRef.current.userData.basePosition = {
               x: baseX,
               y: baseY,
               z: baseZ,
+            };
+            meshRef.current.userData.baseRotation = {
+              x: baseRotationX,
+              y: baseRotationY,
+              z: baseRotationZ,
             };
 
             // Set position (magnetic effect will be applied in useFrame)
@@ -110,9 +130,10 @@ function ShoeModel({
             meshRef.current.position.y = baseY;
             meshRef.current.position.z = baseZ;
 
-            // Keep the original rotation behavior for dynamic movement
-            meshRef.current.rotation.y = Math.PI / 1.5 + progress * Math.PI * 4;
-            meshRef.current.rotation.x = Math.sin(progress * Math.PI * 2) * 0.2;
+            // Set rotation from stages only (no dynamic movement)
+            meshRef.current.rotation.x = baseRotationX;
+            meshRef.current.rotation.y = baseRotationY;
+            meshRef.current.rotation.z = baseRotationZ;
 
             console.log(
               '[v0] Scroll progress:',
