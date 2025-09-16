@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, Suspense } from 'react';
+import { useRef, useEffect, Suspense, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import {
   useGLTF,
@@ -17,7 +17,11 @@ if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-function ShoeModel() {
+function ShoeModel({
+  mousePosition,
+}: {
+  mousePosition: { x: number; y: number };
+}) {
   const meshRef = useRef<THREE.Group>(null);
   const { scene } = useGLTF('/shoe.glb');
 
@@ -73,12 +77,22 @@ function ShoeModel() {
     };
   }, []);
 
-  // Auto-rotate when not scrolling
+  // Auto-rotate when not scrolling and magnetic effect
   useFrame(state => {
     if (meshRef.current) {
       // Add subtle floating animation
       meshRef.current.position.y =
         Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
+
+      // Magnetic effect - move towards cursor position
+      const targetX = (mousePosition.x - 0.5) * 0.5; // Convert to -0.25 to 0.25 range
+      const targetZ = (mousePosition.y - 0.5) * 0.5; // Convert to -0.25 to 0.25 range
+
+      // Smooth interpolation for natural movement
+      meshRef.current.position.x +=
+        (targetX - meshRef.current.position.x) * 0.05;
+      meshRef.current.position.z +=
+        (targetZ - meshRef.current.position.z) * 0.05;
     }
   });
 
@@ -101,6 +115,7 @@ function Loader() {
 
 export default function ShoeViewer() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
 
   console.log('[v0] ShoeViewer component rendering');
 
@@ -118,6 +133,19 @@ export default function ShoeViewer() {
         delay: 0.2,
       }
     );
+
+    // Mouse tracking for magnetic effect
+    const handleMouseMove = (event: MouseEvent) => {
+      const x = event.clientX / window.innerWidth;
+      const y = event.clientY / window.innerHeight;
+      setMousePosition({ x, y });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
   }, []);
 
   return (
@@ -131,7 +159,7 @@ export default function ShoeViewer() {
         <pointLight position={[-10, -10, -5]} intensity={0.5} />
 
         <Suspense fallback={<Loader />}>
-          <ShoeModel />
+          <ShoeModel mousePosition={mousePosition} />
         </Suspense>
 
         <OrbitControls
